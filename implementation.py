@@ -35,11 +35,11 @@ name = args["name"]
 print("[INFO] aligning images...")
 
 if metode == "fast":
-    print("metode: fast")
+    print("method: fast")
     aligned_image, aligned_template,_ = align_images_fast(image, template, debug=True)
 
 if metode == "superglue":
-    print("metode: superglue")
+    print("method: superglue")
 
     base_name_1 = name      
     base_name_2 = name       
@@ -53,37 +53,37 @@ if metode == "superglue":
     )
 
 if metode == "sift":
-    print("metode: sift")
+    print("method: sift")
     aligned_image, aligned_template,_ = align_images_sift(image, template, debug=False)
 
 if metode == "exhaustive":
-    print("metode: exhaustive")
+    print("method: exhaustive")
     aligned_image, aligned_template = exhaustive_search(image, template)
 
 if metode == "lightglue":
-    print("metode: lightglue")
+    print("method: lightglue")
     aligned_image, aligned_template, H = align_images_lightglue(image, template, debug=False)
 
 
 
 if metode == "exhaustive_torch":
-    print("metode: exhaustive torch")
+    print("method: exhaustive torch")
     aligned_image, aligned_template = exhaustive_search_torch(image, template)
 
 if metode == "randomized":
-    print("metode: randomized")
+    print("method: randomized")
     aligned_image, aligned_template = randomized_search(image, template)
 
 if metode == "diff_ev":
-    print("metode: differential evolution")
+    print("method: differential evolution")
     aligned_image, aligned_template = differential_ev(image, template)
 
 if metode == "affine":
-    print("metode: affine")
+    print("method: affine")
     aligned_image, aligned_template, _ = align_affine(image, template)
 
-if metode == "homografia":
-    print("metode: affine")
+if metode == "homography":
+    print("method: homography")
     aligned_image, aligned_template = align_homography(image, template)
 
 # resize both the aligned and template images so we can easily
