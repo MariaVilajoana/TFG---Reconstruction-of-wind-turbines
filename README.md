@@ -11,6 +11,7 @@ This project provides various functions to align an input image (`image`) to a t
 /Project/
 ├── alingn.py       # Alignment functions
 ├── implementation.py   # Main CLI script
+├── superglue_wrapper.py
 ├── images/             # Example folder with images
 │   ├── img1.jpg
 │   └── tmp1.jpg
@@ -27,7 +28,7 @@ This project provides various functions to align an input image (`image`) to a t
 * imutils
 * lightglue and superpoint (for “superglue” or “lightglue” methods)
 
-## Functions in `alineacio1.py`
+## Functions in `align.py`
 
 * **`align_images_fast(image, template, maxFeatures=500, keepPercent=0.2, debug=False)`**
   ORB + BFMatcher (Hamming) + RANSAC → homography
@@ -73,7 +74,8 @@ This project provides various functions to align an input image (`image`) to a t
   8-parameter homographic optimization via Powell
   Returns: `(aligned_image, aligned_template, H)` where `H` is a 3×3 matrix.
 
-## Main Script (`implementacio1.py`)
+
+## Main Script (`implementation.py`)
 
 * Loads the input image and template.
 * Resizes both to half their original size.
