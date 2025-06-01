@@ -651,7 +651,7 @@ def mse_affine(params, image, template, min_overlap_size):
 
 
 
-def optimize_translation_powell(image, template):
+def align_translation_powell(image, template):
     # Función objetivo para minimizar el MSE según traslación
     def objective(params):
         dx = int(params[0])
