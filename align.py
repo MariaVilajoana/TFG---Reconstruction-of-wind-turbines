@@ -10,11 +10,7 @@ import torch.nn.functional as F
 from sift_manual import sift
 import os
 import matplotlib.pyplot as plt
-#from lightglue import SuperPoint, LightGlue
-#from lightglue.utils import load_image, rbd
 import tempfile 
-import cv2
-import numpy as np
 from lightglue import SuperPoint, LightGlue
 from lightglue.utils import load_image, rbd
 from superglue_wrapper import initialize_matcher, match_two_images
@@ -43,21 +39,19 @@ def align_images_superglue(
     debug: bool = True
 ):
     """
-    Alinea image sobre template usando SuperGlue “en caliente”,
-    sin depender de ficheros .npz previos.
 
     Args:
-      - image:    np.ndarray (BGR) de la imagen a alinear.
-      - template: np.ndarray (BGR) de la plantilla.
-      - base_name_1, base_name_2: cadenas para nombrar el fichero de debug.
-      - debug:    si True, dibuja los inliers en rojo y guarda la visualización.
+      - image:    np.ndarray (BGR) of the image to align.
+      - template: np.ndarray (BGR) of the template.
+      - base_name_1, base_name_2: strings for naming the debug file.
+      - debug:    if True, draws inliers in red and saves the visualization.
 
-    Devuelve:
-      - aligned_image:    la imagen “image” re-proyectada sobre template.
-      - aligned_template: el lienzo con la plantilla posicionada en el mismo canvas.
-      - H:                homografía 3×3 (float32) que mapea image → template.
+    Returns:
+      - aligned_image:    the “image” re-projected onto the template.
+      - aligned_template: the canvas with the template placed in the same canvas.
+      - H:                3×3 homography (float32) mapping image → template.
     """
-    # 1) Inicializar (o reutilizar) el matcher estático
+    # 1) Initialize (or reuse) the static matcher
     if not hasattr(align_images_superglue, "_matcher") or align_images_superglue._matcher is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         align_images_superglue._matcher = initialize_matcher(
@@ -72,14 +66,14 @@ def align_images_superglue(
     matcher = align_images_superglue._matcher
     device  = next(matcher.parameters()).device
 
-    # 2) Guardar temporalmente ambas imágenes en disco para pasárselas al wrapper
+    # 2) Temporarily save both images to disk to pass them to the wrapper
     tmp1 = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     tmp2 = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     try:
         cv2.imwrite(tmp1.name, image)
         cv2.imwrite(tmp2.name, template)
 
-        # 3) Obtener directamente los keypoints emparejados en 640×480
+        # 3) Directly obtain the matched keypoints at 640×480
         mkpts0_resized, mkpts1_resized = match_two_images(
             tmp1.name,
             tmp2.name,
@@ -94,7 +88,7 @@ def align_images_superglue(
         os.unlink(tmp1.name)
         os.unlink(tmp2.name)
 
-    # 4) Escalar coordenadas de 640×480 → resolución real
+    # 4) Scale coordinates from 640×480 → actual resolution
     h_i, w_i = image.shape[:2]
     h_t, w_t = template.shape[:2]
     scale_x_img = w_i / 640.0
@@ -109,16 +103,16 @@ def align_images_superglue(
     matched_kpts_tmp[:, 0] *= scale_x_tmp
     matched_kpts_tmp[:, 1] *= scale_y_tmp
 
-    # 5) Verificar que haya al menos 4 matches válidos
+    # 5) Verify that there are at least 4 valid matches
     if matched_kpts_img.shape[0] < 4:
-        raise ValueError(f"No hay suficientes matches ({matched_kpts_img.shape[0]}) para estimar homografía.")
+        raise ValueError(f"Not enough matches ({matched_kpts_img.shape[0]}) to estimate homography.")
 
-    # 6) Estimar homografía con RANSAC
+    # 6) Estimate homography with RANSAC
     H, mask = cv2.findHomography(matched_kpts_img, matched_kpts_tmp, cv2.RANSAC, 5.0)
     if H is None:
-        raise ValueError("No se pudo estimar la homografía (cv2.findHomography devolvió None).")
+        raise ValueError("Could not estimate homography (cv2.findHomography returned None).")
 
-    # 7) Construir canvas que contenga la imagen proyectada y la plantilla
+    # 7) Build a canvas containing the warped image and the template
     corners = np.float32([[0, 0], [w_i, 0], [w_i, h_i], [0, h_i]]).reshape(-1, 1, 2)
     warped_corners = cv2.perspectiveTransform(corners, H)
     all_points = np.concatenate(
@@ -141,7 +135,7 @@ def align_images_superglue(
     aligned_template = np.zeros((new_h, new_w, 3), dtype=np.uint8)
     aligned_template[ty:ty + h_t, tx:tx + w_t] = template
 
-    # 8) Si debug=True, dibujar inliers en rojo y guardar visualización
+    # 8) If debug=True, draw inliers in red and save the visualization
     if debug:
         inliers_img = matched_kpts_img[mask.ravel() == 1]
         inliers_tmp = matched_kpts_tmp[mask.ravel() == 1]
@@ -152,7 +146,7 @@ def align_images_superglue(
         w2 = (w_i + w_t) * 2
         vis = np.zeros((h2, w2, 3), dtype=np.uint8)
 
-        # Colocar imágenes originales (doble tamaño) lado a lado
+        # Place original images (double size) side by side
         vis[: h_i * 2, : w_i * 2] = cv2.resize(image, (w_i * 2, h_i * 2))
         vis[: h_t * 2, w_i * 2 : w_i * 2 + (w_t * 2)] = cv2.resize(template, (w_t * 2, h_t * 2))
 
@@ -167,9 +161,10 @@ def align_images_superglue(
         filename = f"matches_inliers_{base_name_1}_{base_name_2}.png"
         vis_path = os.path.join(vis_dir, filename)
         cv2.imwrite(vis_path, vis)
-        print(f"✅ Inlier matches guardados en: {vis_path}")
+        print(f"✅ Inlier matches saved at: {vis_path}")
 
     return aligned_image, aligned_template, H
+
 
 
 def align_images_fast(image, template, maxFeatures=500, keepPercent=0.2, debug=False):
@@ -848,6 +843,8 @@ def align_affine(image, template):
 
     return aligned_image, aligned_template, M
 
+
+
 def mse_homography(params, image, template, min_overlap_size):
     tx, ty, a, b, c, d, e, f = params
 
@@ -970,50 +967,50 @@ def align_homography(image, template):
 
 def align_images_lightglue(image, template, debug=True):
     """
-    Alinea `image` sobre `template` usando LightGlue (SuperPoint + LightGlue).
-    Guarda una visualización de los matches si debug=True.
-    Retorna (aligned_image, aligned_template, H).
+    Aligns `image` onto `template` using LightGlue (SuperPoint + LightGlue).
+    Saves a visualization of the matches if debug=True.
+    Returns (aligned_image, aligned_template, H).
     """
 
-    # Crear carpeta para visualización
+    # Create folder for visualization
     vis_dir = "vis_lightblue"
     os.makedirs(vis_dir, exist_ok=True)
 
-    # Función auxiliar para convertir a tensor
+    # Helper function to convert to tensor
     def img_to_tensor(img):
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img_norm = img_gray.astype(np.float32) / 255.0
         return torch.from_numpy(img_norm)[None, None].to("cpu")
 
-    # Prepara tensores
+    # Prepare tensors
     img0 = img_to_tensor(template)  # template
-    img1 = img_to_tensor(image)     # image a alinear
+    img1 = img_to_tensor(image)     # image to align
 
-    # Inicializar modelos en CPU
+    # Initialize models on CPU
     extractor = SuperPoint(max_num_keypoints=2048).eval().to("cpu")
     matcher   = LightGlue(features='superpoint').eval().to("cpu")
 
-    # Extraer características y hacer matching
+    # Extract features and perform matching
     feats0 = extractor.extract(img0)
     feats1 = extractor.extract(img1)
     matches01 = matcher({'image0': feats0, 'image1': feats1})
     feats0, feats1, matches01 = [rbd(x) for x in (feats0, feats1, matches01)]
 
-    # Obtén los keypoints emparejados
+    # Get the matched keypoints
     matches = matches01['matches']
     valid = (matches[:, 0] >= 0) & (matches[:, 1] >= 0)
     kpts0 = feats0['keypoints'][matches[valid][:, 0]].cpu().numpy()
     kpts1 = feats1['keypoints'][matches[valid][:, 1]].cpu().numpy()
 
     if len(kpts0) < 4:
-        raise ValueError("❌ No hay suficientes matches para estimar homografía.")
+        raise ValueError("❌ Not enough matches to estimate homography.")
 
-    # Estima homografía (imagen → template)
+    # Estimate homography (image → template)
     H, mask = cv2.findHomography(kpts1, kpts0, cv2.RANSAC, 5.0)
     if H is None:
-        raise ValueError("❌ No se pudo calcular la homografía.")
+        raise ValueError("❌ Could not compute homography.")
 
-    # Calcula nuevo canvas ajustado
+    # Compute new adjusted canvas
     h_t, w_t = template.shape[:2]
     corners = np.array([[0, 0], [w_t, 0], [w_t, h_t], [0, h_t]], dtype=np.float32).reshape(-1, 1, 2)
     warped_corners = cv2.perspectiveTransform(corners, H)
@@ -1028,18 +1025,18 @@ def align_images_lightglue(image, template, debug=True):
                   [0, 0, 1]], dtype=np.float32)
     H_adj = T @ H
 
-    # Warp de la imagen y creación de aligned_image / aligned_template
+    # Warp the image and create aligned_image / aligned_template
     warped = cv2.warpPerspective(image, H_adj, (canvas_w, canvas_h), borderValue=(0,0,0))
     aligned_image = warped
     aligned_template = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
     aligned_template[-min_y: h_t-min_y, -min_x: w_t-min_x] = template
 
-    # Visualización opcional de inliers
+    # Optional visualization of inliers
     if debug:
         inliers_img = kpts1[mask.ravel() == 1]
         inliers_tmp = kpts0[mask.ravel() == 1]
         vis = np.zeros((canvas_h, canvas_w*2, 3), dtype=np.uint8)
-        # coloca template y image lado a lado (escalados a canvas_h de altura)
+        # place template and image side by side (scaled to canvas_h height)
         tmp_vis = cv2.resize(template, (canvas_w, canvas_h))
         img_vis = cv2.resize(image,   (canvas_w, canvas_h))
         vis[:, :canvas_w] = tmp_vis
@@ -1053,8 +1050,9 @@ def align_images_lightglue(image, template, debug=True):
             cv2.circle(vis, p0, 4, (255,255,0), -1)
             cv2.circle(vis, p1, 4, (255,255,0), -1)
         cv2.imwrite(os.path.join(vis_dir, f"matches_lightblue.png"), vis)
-        print(f"✅ Visualización guardada en: {vis_dir}/matches_lightblue.png")
+        print(f"✅ Visualization saved at: {vis_dir}/matches_lightblue.png")
 
     return aligned_image, aligned_template, H
+
 
 
