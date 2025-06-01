@@ -651,7 +651,7 @@ def mse_affine(params, image, template, min_overlap_size):
 
 
 
-def optimize_translation_scipy(image, template):
+def optimize_translation_powell(image, template):
     # Función objetivo para minimizar el MSE según traslación
     def objective(params):
         dx = int(params[0])
@@ -739,7 +739,7 @@ def mse_affine(params, image, template, min_overlap_size):
     return mse
 
 
-def align_affine(image, template):
+def align_affine_powell(image, template):
     """
     Find and apply a full 6-DOF affine alignment between image and template.
     Returns the aligned image, aligned template (padded on the same canvas),
@@ -891,7 +891,7 @@ def mse_homography(params, image, template, min_overlap_size):
     return mse
 
 
-def align_homography(image, template):
+def align_homography_powell(image, template):
     bounds = [
         (-500, 500),   # tx
         (-2000, 2000), # ty
@@ -908,9 +908,9 @@ def align_homography(image, template):
     min_overlap_size = template.shape[0] * template.shape[1] * 0.3
     result = minimize(mse_homography, initial_params, args=(image, template, min_overlap_size), bounds=bounds, method='Powell')
 
-    print(f"Resultado de la optimización: {result}")
-    print(f"Parámetros optimizados: {result.x}")
-    print(f"Valor mínimo de MSE encontrado: {result.fun}")
+    print(f"Optimísation result: {result}")
+    print(f"Optimízed parameters: {result.x}")
+    print(f"Minimum MSE: {result.fun}")
 
     tx, ty, a, b, c, d, e, f = result.x
 
