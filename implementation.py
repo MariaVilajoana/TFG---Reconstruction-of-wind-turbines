@@ -77,11 +77,11 @@ if metode == "diff_ev":
     aligned_image, aligned_template,_,__ = differential_ev(image, template)
 
 if metode == "affine_powell":
-    print("method: affine")
+    print("method: affine powell")
     aligned_image, aligned_template, _ = align_affine_powell(image, template)
 
 if metode == "homography_powell":
-    print("method: homography")
+    print("method: homography powell")
     aligned_image, aligned_template, _ = align_homography_powell(image, template)
     
 if metode == "translation_powell":
