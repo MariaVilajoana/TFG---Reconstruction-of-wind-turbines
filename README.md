@@ -66,14 +66,17 @@ This project provides various functions to align an input image (`image`) to a t
   Global optimization with Differential Evolution (SciPy), TX, TY
   Returns: `(aligned_image, aligned_template, x_min, y_min)`.
 
-* **`align_affine(image, template)`**
+* **`align_affine_powell(image, template)`**
   Full 6-DOF affine optimization via Powell
   Returns: `(aligned_image, aligned_template, M)` where `M` is a 2×3 matrix.
 
-* **`align_homography(image, template)`**
+* **`align_homography_powell(image, template)`**
   8-parameter homographic optimization via Powell
   Returns: `(aligned_image, aligned_template, H)` where `H` is a 3×3 matrix.
 
+* **`align_translation_powell(image, template)`**
+  translation optimization via Powell
+  Returns: `(aligned_image, aligned_template, shiftx, shifty)`.
 
 ## Main Script (`implementation.py`)
 
@@ -109,8 +112,9 @@ python implementacio1.py \
   * `exhaustive_torch`
   * `randomized`
   * `diff_ev`
-  * `affine`
-  * `homografia`
+  * `affine_powell`
+  * `homografia_powell`
+  * `translation_powell`
 * `-n`: suffix for the output filenames (e.g., `test`).
 
 Example:
