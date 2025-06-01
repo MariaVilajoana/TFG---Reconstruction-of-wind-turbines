@@ -1,5 +1,5 @@
 
-from align import align_images_fast, exhaustive_search_torch,align_images_lightglue, randomized_search, exhaustive_search_torch,differential_ev, align_affine, align_homography,exhaustive_search, align_images_superglue ,align_images_sift, exhaustive_search
+from align import align_images_fast, exhaustive_search_torch,align_images_lightglue, randomized_search,align_translation_powell, exhaustive_search_torch,differential_ev, align_affine_powell, align_homography_powell,exhaustive_search, align_images_superglue ,align_images_sift, exhaustive_search
 import numpy as np
 import argparse
 import imutils
@@ -64,8 +64,6 @@ if metode == "lightglue":
     print("method: lightglue")
     aligned_image, aligned_template, H = align_images_lightglue(image, template, debug=False)
 
-
-
 if metode == "exhaustive_torch":
     print("method: exhaustive torch")
     aligned_image, aligned_template = exhaustive_search_torch(image, template)
@@ -78,13 +76,18 @@ if metode == "diff_ev":
     print("method: differential evolution")
     aligned_image, aligned_template = differential_ev(image, template)
 
-if metode == "affine":
+if metode == "affine_powell":
     print("method: affine")
-    aligned_image, aligned_template, _ = align_affine(image, template)
+    aligned_image, aligned_template, _ = align_affine_powell(image, template)
 
-if metode == "homography":
+if metode == "homography_powell":
     print("method: homography")
-    aligned_image, aligned_template = align_homography(image, template)
+    aligned_image, aligned_template, _ = align_homography_powell(image, template)
+    
+if metode == "translation_powell":
+    print("method: translation powell")
+    aligned_image, aligned_template,_ = align_translation_powell(image, template)
+    
 
 # resize both the aligned and template images so we can easily
 # visualize them on our screen
