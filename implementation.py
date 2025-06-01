@@ -58,7 +58,7 @@ if metode == "sift":
 
 if metode == "exhaustive":
     print("method: exhaustive")
-    aligned_image, aligned_template = exhaustive_search(image, template)
+    aligned_image, aligned_template,_,__ = exhaustive_search(image, template)
 
 if metode == "lightglue":
     print("method: lightglue")
@@ -66,15 +66,15 @@ if metode == "lightglue":
 
 if metode == "exhaustive_torch":
     print("method: exhaustive torch")
-    aligned_image, aligned_template = exhaustive_search_torch(image, template)
+    aligned_image, aligned_template,_,__ = exhaustive_search_torch(image, template)
 
 if metode == "randomized":
     print("method: randomized")
-    aligned_image, aligned_template = randomized_search(image, template)
+    aligned_image, aligned_template,_,__ = randomized_search(image, template)
 
 if metode == "diff_ev":
     print("method: differential evolution")
-    aligned_image, aligned_template = differential_ev(image, template)
+    aligned_image, aligned_template,_,__ = differential_ev(image, template)
 
 if metode == "affine_powell":
     print("method: affine")
@@ -86,7 +86,7 @@ if metode == "homography_powell":
     
 if metode == "translation_powell":
     print("method: translation powell")
-    aligned_image, aligned_template,_ = align_translation_powell(image, template)
+    aligned_image, aligned_template,_,__ = align_translation_powell(image, template)
     
 
 # resize both the aligned and template images so we can easily
